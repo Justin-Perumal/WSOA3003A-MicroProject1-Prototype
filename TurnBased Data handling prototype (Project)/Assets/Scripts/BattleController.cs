@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public enum BattleStates {START, PLAYERTURN, ENEMYTURN, WON, LOST}
 
@@ -28,6 +29,8 @@ public class BattleController : MonoBehaviour
 
     public HUDControl PlayerHUD;
     public HUDControl EnemyHUD;
+
+    public int RandomEnemyAttack;
 
     private bool EnemyDead = false;
     private bool PlayerDead = false;
@@ -158,6 +161,11 @@ public class BattleController : MonoBehaviour
         {
             Choice3.GetComponent<Button>().onClick.AddListener(Lifesteal);
         } 
+  
+        if(PlayerIsDefending)
+        {
+            PlayerIsDefending = false;
+        }
     }
 
     void DestroyChoice()
@@ -267,6 +275,10 @@ public class BattleController : MonoBehaviour
         yield return new WaitForSeconds(2f);
 
         PlayerUnit.CurrentHP += PlayerUnit.HealAmount;
+        if(PlayerUnit.CurrentHP > PlayerUnit.MaxHP)
+        {
+            PlayerUnit.CurrentHP = PlayerUnit.MaxHP;
+        }
         states = BattleStates.ENEMYTURN;
         StartCoroutine(EnemyTurn());
     }
@@ -347,15 +359,33 @@ public class BattleController : MonoBehaviour
             }
         }
 
-        CommandText.GetComponent<TextMeshProUGUI>().text = "Enemies turn";
+        if(EnemyIsDefending)
+        {
+            EnemyIsDefending = false;
+        }
 
-        EnemyDmg();
+        CommandText.GetComponent<TextMeshProUGUI>().text = "Enemy's turn";
 
         if(EnemyCrippleCounter == 0)
         {
             EnemyIsCrippled = false;
             EnemyCrippleText.GetComponent<TextMeshProUGUI>().text = "";
         }
+
+        RandomEnemyAttack = Random.Range(1,3);
+
+        if(RandomEnemyAttack == 1)
+        {
+            EnemyDmg();
+        }
+        if(RandomEnemyAttack == 2)
+        {
+            EnemyDefend();
+        }
+       /* if(RandomEnemyAttack == 3)
+        {
+            EnemyHeal();
+        } */
 
         yield return new WaitForSeconds(2f);
 
@@ -378,12 +408,28 @@ public class BattleController : MonoBehaviour
     {
         if(states == BattleStates.WON)
         {
+            StartCoroutine(BattleWon());
             Debug.Log("You have won");
         }
         else if(states == BattleStates.LOST)
         {
+            StartCoroutine(BattleLost());
             Debug.Log("You have lost");
         }
+    }
+
+    IEnumerator BattleWon()
+    {
+        CommandText.GetComponent<TextMeshProUGUI>().text = "You have won the battle!";
+        yield return new WaitForSeconds (4f);
+        SceneManager.LoadScene("SampleScene");
+    }
+
+     IEnumerator BattleLost()
+    {
+        CommandText.GetComponent<TextMeshProUGUI>().text = "You have lost the battle!";
+        yield return new WaitForSeconds (4f);
+        SceneManager.LoadScene("SampleScene");
     }
 
     void PlayerDmg()
@@ -391,7 +437,6 @@ public class BattleController : MonoBehaviour
         if(EnemyIsDefending)
         {
           EnemyUnit.CurrentHP -= Mathf.RoundToInt(PlayerUnit.Damage/2);  
-          EnemyIsDefending = false;
         }
         else
         {
@@ -401,12 +446,13 @@ public class BattleController : MonoBehaviour
 
     void EnemyDmg()
     {
+        CommandText.GetComponent<TextMeshProUGUI>().text = "Enemy is attacking";
+
         if(EnemyIsCrippled && EnemyCrippleCounter > 0)
         {
             if(PlayerIsDefending)
             {
                 PlayerUnit.CurrentHP -= Mathf.RoundToInt((EnemyUnit.Damage-1)/2);
-                PlayerIsDefending = false;
             }
             else
             {
@@ -426,6 +472,22 @@ public class BattleController : MonoBehaviour
                 PlayerUnit.CurrentHP -= (EnemyUnit.Damage);
             }
         }
+    }
+
+    void EnemyDefend()
+    {
+        EnemyIsDefending = true;
+        CommandText.GetComponent<TextMeshProUGUI>().text = "Enemy is defending";
+    }
+
+    void EnemyHeal()
+    {
+        EnemyUnit.CurrentHP += EnemyUnit.HealAmount;
+        if(EnemyUnit.CurrentHP > EnemyUnit.MaxHP)
+        {
+            EnemyUnit.CurrentHP = EnemyUnit.MaxHP;
+        }
+        CommandText.GetComponent<TextMeshProUGUI>().text = "Enemy is healing";
     }
 
 }

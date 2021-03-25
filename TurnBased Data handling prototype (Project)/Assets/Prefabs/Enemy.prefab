@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   UnitName: Enemy
-  Damage: 3
+  Damage: 4
   MaxHP: 15
   CurrentHP: 15
-  HealAmount: 3
+  HealAmount: 4
